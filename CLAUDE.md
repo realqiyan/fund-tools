@@ -33,18 +33,37 @@ pip install -e tools/
 
 ## Development Workflow
 
-### Git Workflow
+### Collaborative Development Process
+
+When completing a feature or fix, follow this workflow:
+
+1. **Check current status**: `git status`
+2. **Stage changes**: `git add <files>` or `git add .`
+3. **Commit with conventional message**: `git commit -m "type: description"`
+4. **Push to remote**: `git push`
+
+Claude should automatically commit and push after completing tasks unless the user specifies otherwise.
+
+### Git Commands Reference
 
 ```bash
 # Check status
 git status
 
-# Stage and commit changes
+# Stage specific files
+git add <file1> <file2>
+
+# Stage all changes
 git add .
+
+# Commit with message
 git commit -m "type: description"
 
-# Push to GitHub
+# Push to remote
 git push
+
+# Pull latest changes
+git pull
 ```
 
 ### Commit Message Convention
