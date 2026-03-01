@@ -14,19 +14,21 @@ from .csv_importer import CSVImporter
 from .mcp_service import MCPService
 from .statistics import Statistics
 from .env_checker import EnvChecker
+from .config import get_db_path
 
 
 console = Console()
 
 
 @click.group()
-@click.option("--db", default="fund_portfolio.db", help="数据库文件路径")
+@click.option("--db", default=None, help="数据库文件路径（默认: $HOME/.fund-advisor/fund_portfolio_v1.db）")
 @click.pass_context
 def cli(ctx, db):
     """基金持仓管理系统 - 管理您的基金投资组合"""
     ctx.ensure_object(dict)
-    ctx.obj["db_path"] = db
-    ctx.obj["database"] = Database(db)
+    db_path = db if db is not None else get_db_path()
+    ctx.obj["db_path"] = db_path
+    ctx.obj["database"] = Database(db_path)
 
 
 # ==================== 环境初始化命令 ====================

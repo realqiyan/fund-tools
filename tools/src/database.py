@@ -12,13 +12,14 @@ from src.models import (
     FundHolding, FundInfo, FundHoldingsDetail,
     StockHolding, BondHolding, FundType
 )
+from src.config import get_db_path
 
 
 class Database:
     """SQLite数据库操作类"""
 
-    def __init__(self, db_path: str = "fund_portfolio.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None):
+        self.db_path = db_path if db_path is not None else get_db_path()
         self._init_database()
 
     def _init_database(self):

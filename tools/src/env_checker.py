@@ -2,11 +2,17 @@
 基金持仓管理系统 - 环境检查和初始化
 """
 import json
-import os
 import subprocess
 import shutil
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
+
+from .config import (
+    QIEMAN_API_KEY,
+    get_api_key,
+    is_api_key_configured,
+    get_qieman_mcp_config
+)
 
 
 class EnvChecker:
@@ -14,24 +20,6 @@ class EnvChecker:
 
     MCPORTER_CONFIG_PATH = Path.home() / ".mcporter" / "mcporter.json"
     REQUIRED_MCP_SERVER = "qieman-mcp"
-    ENV_API_KEY = "QIEMAN_API_KEY"
-
-    def get_api_key(self) -> Optional[str]:
-        """从环境变量获取 API Key"""
-        return os.environ.get(self.ENV_API_KEY)
-
-    def get_qieman_mcp_config(self) -> Dict[str, str]:
-        """获取 qieman-mcp 配置，优先使用环境变量中的 API Key"""
-        api_key = self.get_api_key()
-        if api_key:
-            return {
-                "baseUrl": f"https://stargate.yingmi.com/mcp/sse?apiKey={api_key}",
-                "description": "基金投资工具包，提供基金、内容、投研、投顾等专业领域能力。"
-            }
-        return {
-            "baseUrl": "https://stargate.yingmi.com/mcp/sse?apiKey=YOUR_API_KEY_HERE",
-            "description": "基金投资工具包，提供基金、内容、投研、投顾等专业领域能力。"
-        }
 
     def __init__(self):
         self.results: Dict[str, Any] = {}
@@ -69,8 +57,7 @@ class EnvChecker:
 
     def check_api_key_configured(self) -> bool:
         """检查环境变量中的 API Key 是否已配置"""
-        api_key = self.get_api_key()
-        result = api_key is not None and len(api_key) > 0 and api_key != "YOUR_API_KEY_HERE"
+        result = is_api_key_configured()
         self.results["api_key_configured"] = result
         return result
 
@@ -106,7 +93,7 @@ class EnvChecker:
         if "mcpServers" not in config:
             config["mcpServers"] = {}
 
-        config["mcpServers"][self.REQUIRED_MCP_SERVER] = self.get_qieman_mcp_config()
+        config["mcpServers"][self.REQUIRED_MCP_SERVER] = get_qieman_mcp_config()
 
         # 保存配置
         try:
@@ -176,7 +163,7 @@ class EnvChecker:
             api_key_ok = self.check_api_key_configured()
             if not api_key_ok:
                 self.results["status"] = "error"
-                self.results["message"] = f"环境变量 {self.ENV_API_KEY} 未配置，请设置 API Key"
+                self.results["message"] = f"环境变量 {QIEMAN_API_KEY} 未配置，请设置 API Key"
                 return self.results
 
             # 5. 配置qieman-mcp
@@ -234,7 +221,7 @@ class EnvChecker:
 
         # API Key 环境变量状态
         status = "✓" if self.results.get("api_key_configured") else "✗"
-        lines.append(f"[{status}] {self.ENV_API_KEY} 环境变量")
+        lines.append(f"[{status}] {QIEMAN_API_KEY} 环境变量")
 
         # 配置文件状态
         status = "✓" if self.results.get("config_exists") else "✗"
