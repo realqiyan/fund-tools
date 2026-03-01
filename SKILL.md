@@ -2,7 +2,7 @@
 name: fund-advisor
 description: 基金投资顾问技能。提供个人持仓管理功能，并整合盈米且慢MCP服务，提供基金数据查询、投资组合分析、市场分析等服务。当用户询问基金投资、基金信息查询、财经信息查询、持仓分析等基金投资相关问题时激活此技能。
 homepage: https://github.com/realqiyan/fund-advisor
-metadata: {"clawdbot":{"emoji":"💰","requires":{"bins":["mcporter","python","pip"],"env":["QIEMAN_API_KEY"]}}}
+metadata: {"clawdbot":{"emoji":"💰","requires":{"bins":["bash","mcporter","python","pip"],"env":["QIEMAN_API_KEY"]}}}
 compatibility: 需要 mcporter CLI 和 qieman-mcp MCP 服务配置
 allowed-tools: Bash(mcporter:*) Bash(python:*) Bash(bash*) Read(*.csv) Read(*.md)
 ---
