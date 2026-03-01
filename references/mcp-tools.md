@@ -10,7 +10,9 @@ qieman-mcp 是基金投资工具包，提供基金、内容、投研、投顾等
 mcporter call qieman-mcp.<tool_name> --args '<json_args>' --output json
 ```
 
-## 工具列表
+> **完整工具清单**：72个工具详见 [mcp-tools-full.md](./mcp-tools-full.md)
+
+## 常用工具
 
 ### BatchGetFundsDetail
 
@@ -113,6 +115,139 @@ mcporter call qieman-mcp.BatchGetFundsDetail \
 ```bash
 mcporter call qieman-mcp.BatchGetFundsHolding \
   --args '{"fundCodes": ["004137"]}' \
+  --output json
+```
+
+### SearchFunds
+
+基金搜索
+
+**参数：**
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| keyword | string | 否 | 搜索关键词 |
+| fundType | string | 否 | 基金类型 |
+| sortBy | string | 否 | 排序字段 |
+| limit | int | 否 | 返回数量 |
+
+**示例：**
+
+```bash
+mcporter call qieman-mcp.SearchFunds \
+  --args '{"keyword": "红利", "limit": 10}' \
+  --output json
+```
+
+### GetFundDiagnosis
+
+基金诊断
+
+**参数：**
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| fundCode | string | 是 | 基金代码 |
+
+**示例：**
+
+```bash
+mcporter call qieman-mcp.GetFundDiagnosis \
+  --args '{"fundCode": "005827"}' \
+  --output json
+```
+
+### GetFundsCorrelation
+
+基金相关性分析
+
+**参数：**
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| fundCodes | string[] | 是 | 基金代码数组 |
+
+**示例：**
+
+```bash
+mcporter call qieman-mcp.GetFundsCorrelation \
+  --args '{"fundCodes": ["005827", "000001"]}' \
+  --output json
+```
+
+### GetFundsBackTest
+
+组合回测分析
+
+**参数：**
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| fundCodes | string[] | 是 | 基金代码数组 |
+| weights | number[] | 否 | 权重数组 |
+
+**示例：**
+
+```bash
+mcporter call qieman-mcp.GetFundsBackTest \
+  --args '{"fundCodes": ["005094", "320007"], "weights": [0.5, 0.5]}' \
+  --output json
+```
+
+### DiagnoseFundPortfolio
+
+账户诊断
+
+**参数：**
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| holdings | array | 是 | 持仓列表，包含fundCode和amount或weight |
+
+**示例：**
+
+```bash
+mcporter call qieman-mcp.DiagnoseFundPortfolio \
+  --args '{"holdings": [{"fundCode": "005094", "weight": 0.47}, {"fundCode": "320007", "weight": 0.23}]}' \
+  --output json
+```
+
+### GetAssetAllocationPlan
+
+获取资产配置方案
+
+**参数：**
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| expectedAnnualReturn | number | 否 | 预期年化收益率 |
+| expectedMaxDrawdown | number | 否 | 预期最大回撤 |
+| investmentPeriod | number | 否 | 投资期限(年) |
+
+**示例：**
+
+```bash
+mcporter call qieman-mcp.GetAssetAllocationPlan \
+  --args '{"expectedAnnualReturn": 0.08, "investmentPeriod": 3}' \
+  --output json
+```
+
+### AnalyzeAssetLiability
+
+资产负债分析
+
+**参数：**
+
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| totalAsset | number | 是 | 总资产 |
+| totalLiability | number | 是 | 总负债 |
+
+**示例：**
+
+```bash
+mcporter call qieman-mcp.AnalyzeAssetLiability \
+  --args '{"totalAsset": 5000000, "totalLiability": 2000000}' \
   --output json
 ```
 
