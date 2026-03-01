@@ -37,44 +37,44 @@ allowed-tools: Bash(mcporter:*) Bash(python:*) Bash(bash*) Read(*.csv) Read(*.md
 
 ```bash
 # 初始化环境（检查 mcporter 和 qieman-mcp 配置）
-scripts/fund-cli.sh init
+bash scripts/fund-cli.sh init
 
 # 查看持仓列表
-scripts/fund-cli.sh holdings
+bash scripts/fund-cli.sh holdings
 
 # 查看投资组合总览
-scripts/fund-cli.sh overview
+bash scripts/fund-cli.sh overview
 
 # 导入 CSV 持仓文件 导入的数据会保持于 `./fund_portfolio.db` 数据文件中
-scripts/fund-cli.sh import-csv tools/data/holdings.csv
+bash scripts/fund-cli.sh import-csv tools/data/holdings.csv
 
 # 同步所有数据到本地（基础信息 + 持仓详情）
-scripts/fund-cli.sh sync --all
+bash scripts/fund-cli.sh sync --all
 
 # 仅同步基金基础信息数据到本地
-scripts/fund-cli.sh sync --info
+bash scripts/fund-cli.sh sync --info
 
 # 仅同步基金持仓详情数据到本地
-scripts/fund-cli.sh sync --detail
+bash scripts/fund-cli.sh sync --detail
 ```
 
 ### 2. 持仓分析
 
 ```bash
 # 查看基金详情
-scripts/fund-cli.sh detail 004137
+bash scripts/fund-cli.sh detail 004137
 
 # 查看管理人分布
-scripts/fund-cli.sh managers
+bash scripts/fund-cli.sh managers
 
 # 查看销售机构分布
-scripts/fund-cli.sh agencies
+bash scripts/fund-cli.sh agencies
 
 # 显示所有统计
-scripts/fund-cli.sh stats
+bash scripts/fund-cli.sh stats
 
 # 导出统计报告
-scripts/fund-cli.sh export --output report.txt
+bash scripts/fund-cli.sh export --output report.txt
 ```
 
 
@@ -148,8 +148,8 @@ mcporter call qieman-mcp.BatchGetFundsDetail --args '{"fundCodes":["005827"]}' -
 
 执行：
 ```bash
-scripts/fund-cli.sh overview
-scripts/fund-cli.sh stats
+bash scripts/fund-cli.sh overview
+bash scripts/fund-cli.sh stats
 ```
 
 ### 示例3：导入新持仓
@@ -158,7 +158,7 @@ scripts/fund-cli.sh stats
 
 执行：
 ```bash
-scripts/fund-cli.sh import-csv /path/to/holdings.csv
+bash scripts/fund-cli.sh import-csv /path/to/holdings.csv
 ```
 
 ### 示例4：同步最新数据
@@ -167,7 +167,7 @@ scripts/fund-cli.sh import-csv /path/to/holdings.csv
 
 执行：
 ```bash
-scripts/fund-cli.sh sync --all
+bash scripts/fund-cli.sh sync --all
 ```
 
 ## 注意事项
@@ -307,7 +307,7 @@ brew install mcporter
 
 ```bash
 # 检查并初始化环境（会自动使用环境变量中的 API Key 配置 qieman-mcp）
-scripts/fund-cli.sh init
+bash scripts/fund-cli.sh init
 ```
 
 初始化脚本会：
