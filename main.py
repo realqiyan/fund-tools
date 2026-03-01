@@ -176,12 +176,12 @@ def accounts(ctx):
 @click.option("--info", is_flag=True, help="同步基金基础信息")
 @click.option("--detail", is_flag=True, help="同步基金持仓详情")
 @click.option("--all", "sync_all", is_flag=True, help="同步所有信息")
+@click.option("--batch-size", default=10, type=int, help="每批次获取基金数量（最大10）")
 @click.pass_context
-def sync(ctx, info, detail, sync_all):
+def sync(ctx, info, detail, sync_all, batch_size):
     """同步基金数据（从MCP服务获取）"""
     database = ctx.obj["database"]
 
-    # 先检查环境
     env_checker = EnvChecker()
     if not env_checker.check_mcporter_installed():
         console.print("[red]错误: mcporter未安装，请先运行 'fund-tools init' 初始化环境[/]")
@@ -191,16 +191,15 @@ def sync(ctx, info, detail, sync_all):
         console.print("[yellow]qieman-mcp未配置，正在自动配置...[/]")
         env_checker.setup_qieman_mcp_config()
 
-    mcp = MCPService()
+    mcp = MCPService(batch_size=batch_size)
 
-    # 获取需要同步的基金代码
     fund_codes = database.get_fund_codes_from_holdings()
 
     if not fund_codes:
         console.print("[yellow]没有找到持仓基金代码，请先导入持仓数据[/]")
         return
 
-    console.print(f"[cyan]发现 {len(fund_codes)} 只基金需要同步[/]")
+    console.print(f"[cyan]发现 {len(fund_codes)} 只基金需要同步，批次大小: {batch_size}[/]")
 
     if sync_all or info:
         # 同步基金基础信息

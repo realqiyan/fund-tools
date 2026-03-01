@@ -13,8 +13,9 @@ from src.models import FundInfo, FundHoldingsDetail, StockHolding, BondHolding
 class MCPService:
     """MCP数据服务类"""
 
-    def __init__(self, mcporter_path: str = "mcporter"):
+    def __init__(self, mcporter_path: str = "mcporter", batch_size: int = 10):
         self.mcporter_path = mcporter_path
+        self.batch_size = min(batch_size, 10)
 
     def _execute_mcporter(self, tool: str, args: dict) -> Optional[dict]:
         """执行mcporter命令"""
@@ -51,7 +52,7 @@ class MCPService:
         批量获取基金详细信息
 
         Args:
-            fund_codes: 基金代码列表，最多20个
+            fund_codes: 基金代码列表，最多10个每批
 
         Returns:
             FundInfo列表
@@ -59,9 +60,8 @@ class MCPService:
         if not fund_codes:
             return []
 
-        # 分批处理，每批最多20个
         results = []
-        batch_size = 20
+        batch_size = self.batch_size
 
         for i in range(0, len(fund_codes), batch_size):
             batch = fund_codes[i:i + batch_size]
@@ -178,7 +178,7 @@ class MCPService:
         批量获取基金持仓情况
 
         Args:
-            fund_codes: 基金代码列表，最多20个
+            fund_codes: 基金代码列表，最多10个每批
             fund_report_date: 报告日期（可选）
 
         Returns:
@@ -188,7 +188,7 @@ class MCPService:
             return []
 
         results = []
-        batch_size = 20
+        batch_size = self.batch_size
 
         for i in range(0, len(fund_codes), batch_size):
             batch = fund_codes[i:i + batch_size]
