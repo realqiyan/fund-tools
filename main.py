@@ -143,6 +143,15 @@ def agencies(ctx, limit):
 
 @cli.command()
 @click.pass_context
+def invest_type(ctx):
+    """显示投资类型分布"""
+    database = ctx.obj["database"]
+    stats = Statistics(database)
+    stats.show_invest_type_distribution()
+
+
+@cli.command()
+@click.pass_context
 def accounts(ctx):
     """显示基金账户列表"""
     database = ctx.obj["database"]

@@ -14,7 +14,7 @@ class EnvChecker:
     MCPORTER_CONFIG_PATH = Path.home() / ".mcporter" / "mcporter.json"
     REQUIRED_MCP_SERVER = "qieman-mcp"
 
-    # 默认的qieman-mcp配置
+    # 默认的qieman-mcp配置模板（apiKey需要用户自行配置）
     DEFAULT_QIEMAN_MCP_CONFIG = {
         "baseUrl": "https://stargate.yingmi.com/mcp/sse?apiKey=YOUR_API_KEY_HERE",
         "description": "基金投资工具包，提供基金、内容、投研、投顾等专业领域能力。"

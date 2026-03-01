@@ -476,6 +476,22 @@ class Database:
             """)
             detail_count = cursor.fetchone()['count']
 
+            # 投资类型分布（从fund_info表获取）
+            cursor.execute("""
+                SELECT
+                    COALESCE(i.fund_invest_type, '未知') as invest_type,
+                    COUNT(*) as count,
+                    SUM(h.asset_value) as total
+                FROM fund_holdings h
+                LEFT JOIN fund_info i ON h.fund_code = i.fund_code
+                GROUP BY i.fund_invest_type
+                ORDER BY total DESC
+            """)
+            invest_type_distribution = {
+                row['invest_type']: {'count': row['count'], 'total': row['total']}
+                for row in cursor.fetchall()
+            }
+
             return {
                 'total_asset_value': total_asset,
                 'fund_count': fund_count,
@@ -483,6 +499,7 @@ class Database:
                 'currency_distribution': currency_distribution,
                 'manager_distribution': manager_distribution,
                 'sales_agency_distribution': sales_agency_distribution,
+                'invest_type_distribution': invest_type_distribution,
                 'fund_accounts': fund_accounts,
                 'info_count': info_count,
                 'detail_count': detail_count

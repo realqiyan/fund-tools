@@ -115,6 +115,35 @@ class Statistics:
 
         self.console.print(table)
 
+    def show_invest_type_distribution(self):
+        """显示投资类型分布"""
+        stats = self.database.get_statistics()
+        invest_dist = stats.get('invest_type_distribution', {})
+
+        if not invest_dist:
+            self.console.print("[yellow]暂无投资类型分布数据，请先运行 sync --info 同步基金信息[/]")
+            return
+
+        table = Table(title="投资类型分布", show_header=True, header_style="bold cyan")
+        table.add_column("投资类型", style="cyan")
+        table.add_column("持仓数", justify="right", style="blue")
+        table.add_column("资产价值", justify="right", style="green")
+        table.add_column("占比", justify="right", style="yellow")
+
+        total = sum(i['total'] for i in invest_dist.values())
+        sorted_types = sorted(invest_dist.items(), key=lambda x: x[1]['total'], reverse=True)
+
+        for invest_type, data in sorted_types:
+            percentage = (data['total'] / total * 100) if total > 0 else 0
+            table.add_row(
+                invest_type or "未知",
+                str(data['count']),
+                f"¥{data['total']:,.2f}",
+                f"{percentage:.2f}%"
+            )
+
+        self.console.print(table)
+
     def show_holdings_list(self, fund_account: str = None, limit: int = 20):
         """显示持仓列表"""
         holdings = self.database.get_fund_holdings(fund_account)
@@ -293,6 +322,14 @@ class Statistics:
                                       key=lambda x: x[1]['total'], reverse=True):
                 f.write(f"  {agency}: {data['count']}只, ¥{data['total']:,.2f}\n")
 
+            f.write("\n" + "-" * 40 + "\n")
+            f.write("投资类型分布:\n")
+            f.write("-" * 40 + "\n")
+            invest_dist = stats.get('invest_type_distribution', {})
+            for invest_type, data in sorted(invest_dist.items(),
+                                           key=lambda x: x[1]['total'], reverse=True):
+                f.write(f"  {invest_type}: {data['count']}只, ¥{data['total']:,.2f}\n")
+
         self.console.print(f"[green]报告已导出到: {output_path}[/]")
 
     def show_all_stats(self):
@@ -301,6 +338,8 @@ class Statistics:
         self.show_overview()
         self.console.print("\n")
         self.show_currency_distribution()
+        self.console.print("\n")
+        self.show_invest_type_distribution()
         self.console.print("\n")
         self.show_manager_distribution()
         self.console.print("\n")
