@@ -123,15 +123,3 @@ class FundHoldingsDetail:
     top_stocks: List[StockHolding] = field(default_factory=list)
     top_bonds: List[BondHolding] = field(default_factory=list)
     data_update_time: Optional[datetime] = None
-
-
-@dataclass
-class FundStatistics:
-    """基金统计数据"""
-    total_asset_value: float  # 总资产
-    fund_count: int  # 基金数量
-    holding_count: int  # 持仓记录数
-    currency_distribution: dict  # 币种分布
-    fund_type_distribution: dict  # 基金类型分布
-    manager_distribution: dict  # 基金管理人分布
-    sales_agency_distribution: dict  # 销售机构分布

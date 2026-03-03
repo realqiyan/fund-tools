@@ -158,34 +158,17 @@ class Database:
             conn.commit()
             return True
 
-    def get_fund_holdings(self, fund_account: Optional[str] = None) -> List[FundHolding]:
+    def get_fund_holdings(self) -> List[FundHolding]:
         """获取基金持有列表"""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            if fund_account:
-                cursor.execute("""
-                    SELECT * FROM fund_holdings
-                    WHERE fund_account = ?
-                    ORDER BY asset_value DESC
-                """, (fund_account,))
-            else:
-                cursor.execute("""
-                    SELECT * FROM fund_holdings
-                    ORDER BY asset_value DESC
-                """)
-
-            return [self._row_to_fund_holding(row) for row in cursor.fetchall()]
-
-    def get_fund_holding(self, fund_account: str, trade_account: str, fund_code: str) -> Optional[FundHolding]:
-        """获取单条基金持有记录"""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
+            
             cursor.execute("""
                 SELECT * FROM fund_holdings
-                WHERE fund_account = ? AND trade_account = ? AND fund_code = ?
-            """, (fund_account, trade_account, fund_code))
-            row = cursor.fetchone()
-            return self._row_to_fund_holding(row) if row else None
+                ORDER BY asset_value DESC
+            """)
+
+            return [self._row_to_fund_holding(row) for row in cursor.fetchall()]
 
     def clear_all_holdings(self) -> int:
         """清空所有持仓记录，返回删除的数量"""
@@ -271,20 +254,6 @@ class Database:
             cursor.execute("SELECT * FROM fund_info WHERE fund_code = ?", (fund_code,))
             row = cursor.fetchone()
             return self._row_to_fund_info(row) if row else None
-
-    def get_fund_infos(self, fund_codes: List[str] = None) -> List[FundInfo]:
-        """获取基金基础信息列表"""
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            if fund_codes:
-                placeholders = ','.join('?' * len(fund_codes))
-                cursor.execute(f"""
-                    SELECT * FROM fund_info WHERE fund_code IN ({placeholders})
-                """, fund_codes)
-            else:
-                cursor.execute("SELECT * FROM fund_info ORDER BY fund_code")
-
-            return [self._row_to_fund_info(row) for row in cursor.fetchall()]
 
     def _row_to_fund_info(self, row: sqlite3.Row) -> FundInfo:
         """将数据库行转换为FundInfo对象"""
@@ -480,3 +449,12 @@ class Database:
                 """, (f'%{value}%',))
 
             return [self._row_to_fund_holding(row) for row in cursor.fetchall()]
+        
+    def get_all_fund_code(self) -> List[str]:
+        """获取所有持仓中的基金代码"""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT DISTINCT fund_code FROM fund_holdings limit 5000
+            """)
+            return [row['fund_code'] for row in cursor.fetchall()]

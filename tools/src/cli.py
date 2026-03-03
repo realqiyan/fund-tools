@@ -118,8 +118,15 @@ def detail(ctx, fund_code):
 def group(ctx, column):
     """按指定列分组统计
 
-    支持的列名: fund_code, fund_name, fund_manager, fund_account,
-                trade_account, sales_agency, invest_type, currency, dividend_method
+    支持的列名: fund_code, 
+              fund_name, 
+              fund_manager, 
+              fund_account,
+              trade_account, 
+              sales_agency, 
+              invest_type, 
+              currency, 
+              dividend_method
     """
     database = ctx.obj["database"]
     stats = Statistics(database)
@@ -135,8 +142,15 @@ def group(ctx, column):
 def query(ctx, column, value):
     """按条件查询持仓明细
 
-    支持的列名: fund_code, fund_name, fund_manager, fund_account,
-                trade_account, sales_agency, invest_type, currency, dividend_method
+    支持的列名: fund_code, 
+              fund_name, 
+              fund_manager, 
+              fund_account,
+              trade_account, 
+              sales_agency, 
+              invest_type, 
+              currency, 
+              dividend_method
     """
     database = ctx.obj["database"]
     stats = Statistics(database)
@@ -167,7 +181,7 @@ def sync(ctx, info, detail, sync_all, batch_size):
 
     mcp = MCPService(batch_size=batch_size)
 
-    fund_codes = database.get_fund_codes_from_holdings()
+    fund_codes = database.get_all_fund_code()
 
     if not fund_codes:
         console.print("[yellow]没有找到持仓基金代码，请先导入持仓数据[/]")
@@ -175,27 +189,19 @@ def sync(ctx, info, detail, sync_all, batch_size):
 
     console.print(f"[cyan]发现 {len(fund_codes)} 只基金需要同步，批次大小: {batch_size}[/]")
 
+    if not info and not detail and not sync_all:
+        sync_all = True
+
     if sync_all or info:
         # 同步基金基础信息
         console.print("\n[cyan]正在同步基金基础信息...[/]")
-        missing_codes = database.get_missing_fund_info_codes()
-        codes_to_sync = missing_codes if missing_codes else fund_codes
-        console.print(f"  需要同步: {len(codes_to_sync)} 只")
-
-        if codes_to_sync:
-            success, fail = mcp.sync_fund_info(codes_to_sync, database)
-            console.print(f"  [green]成功: {success}[/], [red]失败: {fail}[/]")
+        console.print(f"  需要同步: {len(fund_codes)} 只")
+        success, fail = mcp.sync_fund_info(fund_codes, database)
+        console.print(f"  [green]成功: {success}[/], [red]失败: {fail}[/]")
 
     if sync_all or detail:
         # 同步基金持仓详情
         console.print("\n[cyan]正在同步基金持仓详情...[/]")
-        missing_codes = database.get_missing_fund_detail_codes()
-        codes_to_sync = missing_codes if missing_codes else fund_codes
-        console.print(f"  需要同步: {len(codes_to_sync)} 只")
-
-        if codes_to_sync:
-            success, fail = mcp.sync_fund_holdings(codes_to_sync, database)
-            console.print(f"  [green]成功: {success}[/], [red]失败: {fail}[/]")
-
-    if not info and not detail and not sync_all:
-        console.print("[yellow]请指定同步类型: --info, --detail, 或 --all[/]")
+        console.print(f"  需要同步: {len(fund_codes)} 只")
+        success, fail = mcp.sync_fund_holdings(fund_codes, database)
+        console.print(f"  [green]成功: {success}[/], [red]失败: {fail}[/]")

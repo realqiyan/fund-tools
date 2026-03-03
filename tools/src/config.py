@@ -54,12 +54,10 @@ def is_api_key_configured() -> bool:
 def get_qieman_mcp_config() -> Dict[str, str]:
     """获取 qieman-mcp 配置，优先使用环境变量中的 API Key"""
     api_key = get_api_key()
-    if api_key:
-        return {
-            "baseUrl": f"https://stargate.yingmi.com/mcp/sse?apiKey={api_key}",
-            "description": "基金投资工具包，提供基金、内容、投研、投顾等专业领域能力。"
-        }
+    if not api_key:
+        api_key = "YOUR_API_KEY_HERE"
+
     return {
-        "baseUrl": "https://stargate.yingmi.com/mcp/sse?apiKey=YOUR_API_KEY_HERE",
+        "baseUrl": f"https://stargate.yingmi.com/mcp/sse?apiKey={api_key}",
         "description": "基金投资工具包，提供基金、内容、投研、投顾等专业领域能力。"
     }
