@@ -13,22 +13,16 @@ fund-tools is a CLI-based fund portfolio management system (基金持仓管理�
 bash scripts/fund-cli.sh --help
 bash scripts/fund-cli.sh <command> [options]
 
-# Or use installed command directly
-source tools/venv/bin/activate
-fund-tools --help
-
 # Common commands
 bash scripts/fund-cli.sh init                    # Initialize environment (mcporter + qieman-mcp)
 bash scripts/fund-cli.sh import-csv tools/data/sample.csv  # Import holdings from CSV
-bash scripts/fund-cli.sh holdings                # View holdings list
-bash scripts/fund-cli.sh overview                # Show portfolio overview
 bash scripts/fund-cli.sh sync --all              # Sync fund data from MCP service
-bash scripts/fund-cli.sh stats                   # Show all statistics
+bash scripts/fund-cli.sh group -c fund_manager   # Group by fund manager
+bash scripts/fund-cli.sh query -c fund_name -v "货币"  # Query funds by name
 bash scripts/fund-cli.sh detail 004137           # View specific fund detail
 
-# Install/Update package
-source tools/venv/bin/activate
-pip install -e tools/
+# Run unit tests
+cd tools && ./venv/bin/python -m pytest tests/ -v
 ```
 
 ## Development Workflow
@@ -39,10 +33,26 @@ When completing a feature or fix, follow this workflow:
 
 1. **Check current status**: `git status`
 2. **Stage changes**: `git add <files>` or `git add .`
-3. **Commit with conventional message**: `git commit -m "type: description"`
-4. **Push to remote**: `git push`
+3. **Run unit tests**: `cd tools && ./venv/bin/python -m pytest tests/ -v`
+4. **Commit with conventional message**: `git commit -m "type: description"`
+5. **Push to remote**: `git push`
 
 Claude should automatically commit and push after completing tasks unless the user specifies otherwise.
+
+### Running Tests
+
+```bash
+# Run all tests
+cd tools && ./venv/bin/python -m pytest tests/ -v
+
+# Run specific test class
+cd tools && ./venv/bin/python -m pytest tests/test_fund_tools.py::TestDatabase -v
+
+# Run with coverage
+cd tools && ./venv/bin/python -m pytest tests/ -v --cov=src
+```
+
+**Important**: All tests must pass before committing changes.
 
 ### Git Commands Reference
 

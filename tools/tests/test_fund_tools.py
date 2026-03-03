@@ -7,6 +7,8 @@ import tempfile
 import pytest
 from pathlib import Path
 from datetime import date
+from unittest.mock import patch, MagicMock
+from click.testing import CliRunner
 
 # 添加 tools 目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -15,6 +17,7 @@ from src.database import Database
 from src.csv_importer import CSVImporter
 from src.statistics import Statistics
 from src.models import FundHolding, FundInfo, FundType, GroupColumn
+from src.cli import cli
 
 
 # 测试数据 fixture
@@ -353,6 +356,116 @@ class TestModels:
             fund_invest_type="股票型"
         )
         assert info2.is_money_market_fund() is False
+
+
+class TestCLI:
+    """CLI 命令测试"""
+
+    @pytest.fixture
+    def runner(self):
+        """Click CLI 测试运行器"""
+        return CliRunner()
+
+    @pytest.fixture
+    def temp_db_with_data(self, temp_db, sample_csv_path):
+        """创建带测试数据的临时数据库"""
+        importer = CSVImporter(temp_db)
+        importer.import_from_csv(sample_csv_path)
+        return temp_db
+
+    def test_cli_help(self, runner):
+        """测试 CLI 帮助命令"""
+        result = runner.invoke(cli, ['--help'])
+        assert result.exit_code == 0
+        assert '基金持仓管理系统' in result.output
+
+    def test_cli_group_command(self, runner, temp_db_with_data):
+        """测试 group 命令"""
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'group', '-c', 'fund_manager'])
+        assert result.exit_code == 0
+        assert '基金管理人分布' in result.output
+        assert '博时基金' in result.output
+
+    def test_cli_query_command(self, runner, temp_db_with_data):
+        """测试 query 命令"""
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'query', '-c', 'fund_code', '-v', '004137'])
+        assert result.exit_code == 0
+        assert '查询结果' in result.output
+        assert '004137' in result.output
+
+    def test_cli_detail_command(self, runner, temp_db_with_data):
+        """测试 detail 命令"""
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'detail', '004137'])
+        assert result.exit_code == 0
+        assert '我的持仓' in result.output
+
+    def test_cli_import_csv_command(self, runner, temp_db, sample_csv_path):
+        """测试 import-csv 命令"""
+        result = runner.invoke(cli, ['--db', temp_db.db_path, 'import-csv', sample_csv_path])
+        assert result.exit_code == 0
+        assert '导入完成' in result.output
+        assert '成功: 3 条' in result.output
+
+    @patch('src.cli.EnvChecker')
+    @patch('src.cli.MCPService')
+    def test_cli_sync_all_command(self, mock_mcp_class, mock_env_class, runner, temp_db_with_data):
+        """测试 sync --all 命令"""
+        # Mock EnvChecker
+        mock_env = MagicMock()
+        mock_env.check_mcporter_installed.return_value = True
+        mock_env.check_qieman_mcp_configured.return_value = True
+        mock_env_class.return_value = mock_env
+
+        # Mock MCPService
+        mock_mcp = MagicMock()
+        mock_mcp.sync_fund_info.return_value = (3, 0)  # 成功3条，失败0条
+        mock_mcp.sync_fund_holdings.return_value = (3, 0)
+        mock_mcp_class.return_value = mock_mcp
+
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'sync', '--all'])
+
+        assert result.exit_code == 0
+        assert '同步基金基础信息' in result.output
+        assert '同步基金持仓详情' in result.output
+        assert '成功: 3' in result.output
+
+        # 验证 MCP 方法被调用
+        mock_mcp.sync_fund_info.assert_called_once()
+        mock_mcp.sync_fund_holdings.assert_called_once()
+
+    @patch('src.cli.EnvChecker')
+    @patch('src.cli.MCPService')
+    def test_cli_sync_info_only(self, mock_mcp_class, mock_env_class, runner, temp_db_with_data):
+        """测试 sync --info 命令"""
+        mock_env = MagicMock()
+        mock_env.check_mcporter_installed.return_value = True
+        mock_env.check_qieman_mcp_configured.return_value = True
+        mock_env_class.return_value = mock_env
+
+        mock_mcp = MagicMock()
+        mock_mcp.sync_fund_info.return_value = (3, 0)
+        mock_mcp_class.return_value = mock_mcp
+
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'sync', '--info'])
+
+        assert result.exit_code == 0
+        assert '同步基金基础信息' in result.output
+        assert '同步基金持仓详情' not in result.output
+
+        # 只调用了 fund_info，没有调用 holdings
+        mock_mcp.sync_fund_info.assert_called_once()
+        mock_mcp.sync_fund_holdings.assert_not_called()
+
+    @patch('src.cli.EnvChecker')
+    def test_cli_sync_no_mcporter(self, mock_env_class, runner, temp_db_with_data):
+        """测试 mcporter 未安装时的 sync 命令"""
+        mock_env = MagicMock()
+        mock_env.check_mcporter_installed.return_value = False
+        mock_env_class.return_value = mock_env
+
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'sync', '--all'])
+
+        assert 'mcporter未安装' in result.output
 
 
 if __name__ == "__main__":
