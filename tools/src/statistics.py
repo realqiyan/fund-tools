@@ -51,7 +51,7 @@ class Statistics:
         self.console.print(table)
 
     def show_query_result(self, column: GroupColumn, value: str):
-        """显示查询结果
+        """显示查询结果（展示所有导入字段）
 
         Args:
             column: 查询列名（GroupColumn 枚举）
@@ -64,31 +64,53 @@ class Statistics:
             return
 
         display_name = GroupColumn.get_display_name(column)
-        table = Table(title=f"查询结果: {display_name} 包含 '{value}' (共{len(holdings)}条)",
-                      show_header=True, header_style="bold cyan")
-        table.add_column("基金代码", style="cyan", width=10)
-        table.add_column("基金名称", style="white", width=25)
-        table.add_column("持有份额", justify="right", style="blue", width=12)
-        table.add_column("净值", justify="right", style="yellow", width=8)
-        table.add_column("资产价值", justify="right", style="green", width=12)
-        table.add_column(display_name, style="magenta", width=18)
+        table = Table(
+            title=f"查询结果: {display_name} 包含 '{value}' (共{len(holdings)}条)",
+            show_header=True,
+            header_style="bold cyan",
+            expand=False,
+        )
 
-        # 根据查询列获取对应的显示值
-        for holding in holdings[:50]:  # 限制显示50条
-            col_value = self._get_column_value(holding, column)
+        # 添加所有导入字段列
+        table.add_column("基金代码", style="cyan", width=8)
+        table.add_column("基金名称", style="white", width=20)
+        table.add_column("份额类别", style="blue", width=8)
+        table.add_column("基金管理人", style="magenta", width=12)
+        table.add_column("基金账户", style="green", width=12)
+        table.add_column("交易账户", style="yellow", width=12)
+        table.add_column("销售机构", style="blue", width=12)
+        table.add_column("持有份额", justify="right", style="green", width=12)
+        table.add_column("份额日期", justify="center", style="white", width=10)
+        table.add_column("净值", justify="right", style="yellow", width=8)
+        table.add_column("净值日期", justify="center", style="white", width=10)
+        table.add_column("资产价值", justify="right", style="green", width=12)
+        table.add_column("结算币种", justify="center", style="blue", width=8)
+        table.add_column("分红方式", style="cyan", width=8)
+
+        # 限制显示条数以保证性能
+        max_display = 30
+        for holding in holdings[:max_display]:
             table.add_row(
                 holding.fund_code,
-                holding.fund_name[:25] if len(holding.fund_name) > 25 else holding.fund_name,
+                holding.fund_name[:20] if len(holding.fund_name) > 20 else holding.fund_name,
+                holding.share_class[:8] if holding.share_class and len(holding.share_class) > 8 else (holding.share_class or ""),
+                holding.fund_manager[:12] if holding.fund_manager and len(holding.fund_manager) > 12 else (holding.fund_manager or ""),
+                holding.fund_account[:12] if holding.fund_account and len(holding.fund_account) > 12 else (holding.fund_account or ""),
+                holding.trade_account[:12] if holding.trade_account and len(holding.trade_account) > 12 else (holding.trade_account or ""),
+                holding.sales_agency[:12] if holding.sales_agency and len(holding.sales_agency) > 12 else (holding.sales_agency or ""),
                 f"{holding.holding_shares:,.2f}",
-                f"{holding.nav:.4f}",
+                str(holding.share_date) if holding.share_date else "",
+                f"{holding.nav:.4f}" if holding.nav else "",
+                str(holding.nav_date) if holding.nav_date else "",
                 f"¥{holding.asset_value:,.2f}",
-                str(col_value)[:18] if col_value and len(str(col_value)) > 18 else str(col_value or "")
+                holding.settlement_currency or "",
+                holding.dividend_method[:8] if holding.dividend_method and len(holding.dividend_method) > 8 else (holding.dividend_method or ""),
             )
 
-        if len(holdings) > 50:
-            self.console.print(f"[dim]... 还有 {len(holdings) - 50} 条记录未显示[/]")
-
         self.console.print(table)
+
+        if len(holdings) > max_display:
+            self.console.print(f"[dim]... 还有 {len(holdings) - max_display} 条记录未显示[/]")
 
         # 显示汇总信息
         total_value = sum(h.asset_value for h in holdings)
