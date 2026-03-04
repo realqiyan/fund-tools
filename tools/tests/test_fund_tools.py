@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 import pytest
+import json
 from pathlib import Path
 from datetime import date
 from unittest.mock import patch, MagicMock
@@ -252,6 +253,49 @@ class TestStatistics:
         captured = capsys.readouterr()
         assert "未找到基金" in captured.out
 
+    def test_show_group_statistics_json_format(self, capsys):
+        """测试 group 命令 JSON 输出"""
+        self.stats.show_group_statistics(GroupColumn.FUND_MANAGER, output_format="json")
+        captured = capsys.readouterr()
+        # 验证输出是有效 JSON
+        result = json.loads(captured.out)
+        assert "items" in result
+        assert "summary" in result
+        assert "column" in result
+        assert result["column"] == "基金管理人"
+        # 验证 summary 包含预期字段
+        assert "total_count" in result["summary"]
+        assert "total_value" in result["summary"]
+        # 验证 items 包含数据
+        assert len(result["items"]) > 0
+        assert "name" in result["items"][0]
+        assert "count" in result["items"][0]
+        assert "total" in result["items"][0]
+        assert "percentage" in result["items"][0]
+
+    def test_show_query_result_json_format(self, capsys):
+        """测试 query 命令 JSON 输出"""
+        self.stats.show_query_result(GroupColumn.FUND_MANAGER, "博时", output_format="json")
+        captured = capsys.readouterr()
+        # 验证输出是有效 JSON
+        result = json.loads(captured.out)
+        assert "items" in result
+        assert "summary" in result
+        assert "query" in result
+        assert result["query"]["column"] == "基金管理人"
+        assert result["query"]["value"] == "博时"
+        # 验证 summary 包含预期字段
+        assert "total_count" in result["summary"]
+        assert "total_value" in result["summary"]
+        # 验证 items 包含数据
+        assert len(result["items"]) > 0
+        item = result["items"][0]
+        assert "fund_code" in item
+        assert "fund_name" in item
+        assert "fund_manager" in item
+        assert "holding_shares" in item
+        assert "asset_value" in item
+
 
 class TestGroupStatistics:
     """分组统计功能测试"""
@@ -433,6 +477,28 @@ class TestCLI:
         mock_mcp.sync_fund_info.assert_called_once()
         mock_mcp.sync_fund_holdings.assert_called_once()
 
+    def test_cli_group_command_json_format(self, runner, temp_db_with_data):
+        """测试 CLI group -f json"""
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'group', '-c', 'fund_manager', '-f', 'json'])
+        assert result.exit_code == 0
+        # 验证输出是有效 JSON
+        output = json.loads(result.output)
+        assert "items" in output
+        assert "summary" in output
+        assert "column" in output
+        assert output["column"] == "基金管理人"
+
+    def test_cli_query_command_json_format(self, runner, temp_db_with_data):
+        """测试 CLI query -f json"""
+        result = runner.invoke(cli, ['--db', temp_db_with_data.db_path, 'query', '-c', 'fund_code', '-v', '004137', '-f', 'json'])
+        assert result.exit_code == 0
+        # 验证输出是有效 JSON
+        output = json.loads(result.output)
+        assert "items" in output
+        assert "summary" in output
+        assert "query" in output
+        assert output["query"]["column"] == "基金代码"
+        assert output["query"]["value"] == "004137"
 
 
 if __name__ == "__main__":
