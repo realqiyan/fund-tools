@@ -24,6 +24,26 @@ console = Console()
 COLUMN_CHOICES = [col.value for col in GroupColumn]
 
 
+# 字段帮助说明（用于 query 和 group 命令的 epilog）
+COLUMN_HELP_EPILOG = """
+支持的查询/分组字段:
+────────────────────────────────────────
+  fund_code        基金代码    基金的唯一标识代码
+  fund_name        基金名称    基金的完整名称
+  fund_manager     基金管理人  基金管理公司名称
+  fund_account     基金账户    持有该基金的账户编号
+  trade_account    交易账户    进行交易的账户编号
+  sales_agency     销售机构    销售该基金的机构名称
+  invest_type      投资类型    基金投资类型(如股票型、债券型)
+  currency         结算币种    资产结算使用的货币类型
+  dividend_method  分红方式    基金的分红方式(如现金分红)
+
+示例:
+  fund-tools query -c fund_name -v 货币    查询名称包含"货币"的基金
+  fund-tools group -c fund_manager         按基金管理人分组统计
+"""
+
+
 @click.group()
 @click.option("--db", default=None, help="数据库文件路径（默认: $HOME/.fund-advisor/fund_portfolio_v1.db）")
 @click.pass_context
@@ -111,24 +131,17 @@ def detail(ctx, fund_code):
 
 # ==================== 分组统计和查询命令 ====================
 
-@cli.command()
+@cli.command(epilog=COLUMN_HELP_EPILOG)
 @click.option("-c", "--column", required=True, type=click.Choice(COLUMN_CHOICES),
-              help="分组列名")
+              help="分组字段名称")
 @click.option("-f", "--format", "output_format", type=click.Choice(["table", "json"]),
               default="table", help="输出格式: table(表格) 或 json")
 @click.pass_context
 def group(ctx, column, output_format):
-    """按指定列分组统计
+    """按指定字段分组统计持仓数据
 
-    支持的列名: fund_code,
-              fund_name,
-              fund_manager,
-              fund_account,
-              trade_account,
-              sales_agency,
-              invest_type,
-              currency,
-              dividend_method
+    对持仓记录按指定字段进行分组，并计算每组的份额、市值等汇总信息。
+    支持表格和 JSON 两种输出格式，便于数据处理和脚本集成。
     """
     database = ctx.obj["database"]
     stats = Statistics(database)
@@ -136,25 +149,19 @@ def group(ctx, column, output_format):
     stats.show_group_statistics(group_column, output_format)
 
 
-@cli.command()
+@cli.command(epilog=COLUMN_HELP_EPILOG)
 @click.option("-c", "--column", required=True, type=click.Choice(COLUMN_CHOICES),
-              help="查询列名")
+              help="查询字段名称")
 @click.option("-v", "--value", required=True, help="查询值（支持模糊匹配）")
 @click.option("-f", "--format", "output_format", type=click.Choice(["table", "json"]),
               default="table", help="输出格式: table(表格) 或 json")
 @click.pass_context
 def query(ctx, column, value, output_format):
-    """按条件查询持仓明细
+    """按条件查询持仓明细记录
 
-    支持的列名: fund_code,
-              fund_name,
-              fund_manager,
-              fund_account,
-              trade_account,
-              sales_agency,
-              invest_type,
-              currency,
-              dividend_method
+    根据指定字段和值筛选持仓记录，支持模糊匹配。
+    查询结果展示匹配记录的详细信息，包括份额、市值等。
+    支持表格和 JSON 两种输出格式，便于数据处理和脚本集成。
     """
     database = ctx.obj["database"]
     stats = Statistics(database)
