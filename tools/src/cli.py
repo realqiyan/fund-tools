@@ -10,6 +10,7 @@ from rich.prompt import Confirm
 
 from .database import Database
 from .csv_importer import CSVImporter
+from .excel_importer import ExcelImporter
 from .mcp_service import MCPService
 from .statistics import Statistics
 from .env_checker import EnvChecker
@@ -97,6 +98,34 @@ def import_csv(ctx, csv_path):
 
     # 导入数据
     success, fail, errors = importer.import_from_csv(csv_path)
+
+    console.print(f"\n[green]导入完成![/]")
+    console.print(f"  成功: {success} 条")
+    if fail > 0:
+        console.print(f"  失败: {fail} 条")
+        for error in errors[:10]:  # 只显示前10条错误
+            console.print(f"  [red]{error}[/]")
+
+
+@cli.command()
+@click.argument("excel_path", type=click.Path(exists=True))
+@click.pass_context
+def import_excel(ctx, excel_path):
+    """从Excel文件导入持仓数据（支持.xlsx和.xls格式）"""
+    database = ctx.obj["database"]
+    importer = ExcelImporter(database)
+
+    console.print(f"[cyan]正在导入: {excel_path}[/]")
+
+    # 验证Excel
+    is_valid, errors = importer.validate_excel(excel_path)
+    if not is_valid:
+        for error in errors:
+            console.print(f"[red]错误: {error}[/]")
+        return
+
+    # 导入数据
+    success, fail, errors = importer.import_from_excel(excel_path)
 
     console.print(f"\n[green]导入完成![/]")
     console.print(f"  成功: {success} 条")

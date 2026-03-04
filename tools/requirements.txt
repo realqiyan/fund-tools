@@ -6,7 +6,7 @@ rich>=13.0.0
 pytest>=7.0.0
 
 # Data handling
-# pandas>=2.0.0  # 可选，如果需要更复杂的数据分析
+openpyxl>=3.1.0
 
 # Database
 # sqlalchemy>=2.0.0  # 简单项目直接使用sqlite3
