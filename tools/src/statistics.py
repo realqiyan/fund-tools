@@ -1,6 +1,7 @@
 """
 基金持仓管理系统 - 统计视图功能
 """
+import json
 from typing import Any
 from rich.console import Console
 from rich.table import Table
@@ -17,104 +18,172 @@ class Statistics:
         self.database = database
         self.console = Console()
 
-    def show_group_statistics(self, column: GroupColumn):
+    def show_group_statistics(self, column: GroupColumn, output_format: str = "table"):
         """显示分组统计
 
         Args:
             column: 分组列名（GroupColumn 枚举）
+            output_format: 输出格式，"table" 或 "json"
         """
         data = self.database.get_group_statistics(column.value)
 
         if not data:
-            self.console.print(f"[yellow]暂无{GroupColumn.get_display_name(column)}分布数据[/]")
+            if output_format == "json":
+                result = {"error": f"暂无{GroupColumn.get_display_name(column)}分布数据"}
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+            else:
+                self.console.print(f"[yellow]暂无{GroupColumn.get_display_name(column)}分布数据[/]")
             return
 
         display_name = GroupColumn.get_display_name(column)
-        table = Table(title=f"{display_name}分布", show_header=True, header_style="bold cyan")
-        table.add_column(display_name, style="cyan")
-        table.add_column("持仓数", justify="right", style="blue")
-        table.add_column("资产价值", justify="right", style="green")
-        table.add_column("占比", justify="right", style="yellow")
-
         total = sum(item['total'] or 0 for item in data)
-
-        for item in data:
-            item_total = item['total'] or 0
-            percentage = (item_total / total * 100) if total > 0 else 0
-            table.add_row(
-                str(item['name'] or "未知"),
-                str(item['count']),
-                f"¥{item_total:,.2f}",
-                f"{percentage:.2f}%"
-            )
-
-        self.console.print(table)
-
-        # 显示汇总信息
         total_count = sum(item['count'] for item in data)
-        self.console.print(f"\n[green]总计: {total_count} 条记录, 资产价值: ¥{total:,.2f}[/]")
 
-    def show_query_result(self, column: GroupColumn, value: str):
+        if output_format == "json":
+            # JSON 格式输出
+            items = []
+            for item in data:
+                item_total = item['total'] or 0
+                percentage = (item_total / total * 100) if total > 0 else 0
+                items.append({
+                    "name": str(item['name'] or "未知"),
+                    "count": item['count'],
+                    "total": item_total,
+                    "percentage": round(percentage, 2)
+                })
+            result = {
+                "column": display_name,
+                "items": items,
+                "summary": {
+                    "total_count": total_count,
+                    "total_value": round(total, 2)
+                }
+            }
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            # 表格格式输出
+            table = Table(title=f"{display_name}分布", show_header=True, header_style="bold cyan")
+            table.add_column(display_name, style="cyan")
+            table.add_column("持仓数", justify="right", style="blue")
+            table.add_column("资产价值", justify="right", style="green")
+            table.add_column("占比", justify="right", style="yellow")
+
+            for item in data:
+                item_total = item['total'] or 0
+                percentage = (item_total / total * 100) if total > 0 else 0
+                table.add_row(
+                    str(item['name'] or "未知"),
+                    str(item['count']),
+                    f"¥{item_total:,.2f}",
+                    f"{percentage:.2f}%"
+                )
+
+            self.console.print(table)
+
+            # 显示汇总信息
+            self.console.print(f"\n[green]总计: {total_count} 条记录, 资产价值: ¥{total:,.2f}[/]")
+
+    def show_query_result(self, column: GroupColumn, value: str, output_format: str = "table"):
         """显示查询结果（展示所有导入字段）
 
         Args:
             column: 查询列名（GroupColumn 枚举）
             value: 查询值
+            output_format: 输出格式，"table" 或 "json"
         """
         holdings = self.database.query_holdings(column.value, value)
 
         if not holdings:
-            self.console.print(f"[yellow]未找到匹配 '{value}' 的持仓记录[/]")
+            if output_format == "json":
+                result = {"error": f"未找到匹配 '{value}' 的持仓记录"}
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+            else:
+                self.console.print(f"[yellow]未找到匹配 '{value}' 的持仓记录[/]")
             return
 
         display_name = GroupColumn.get_display_name(column)
-        table = Table(
-            title=f"查询结果: {display_name} 包含 '{value}' (共{len(holdings)}条)",
-            show_header=True,
-            header_style="bold cyan",
-            expand=False,
-        )
+        total_value = sum(h.asset_value for h in holdings)
 
-        # 添加所有导入字段列（不限制宽度，完整显示）
-        table.add_column("基金代码", style="cyan")
-        table.add_column("基金名称", style="white")
-        table.add_column("份额类别", style="blue")
-        table.add_column("基金管理人", style="magenta")
-        table.add_column("基金账户", style="green")
-        table.add_column("交易账户", style="yellow")
-        table.add_column("销售机构", style="blue")
-        table.add_column("持有份额", justify="right", style="green")
-        table.add_column("份额日期", justify="center", style="white")
-        table.add_column("净值", justify="right", style="yellow")
-        table.add_column("净值日期", justify="center", style="white")
-        table.add_column("资产价值", justify="right", style="green")
-        table.add_column("结算币种", justify="center", style="blue")
-        table.add_column("分红方式", style="cyan")
-
-        # 显示所有记录，不做截取
-        for holding in holdings:
-            table.add_row(
-                holding.fund_code,
-                holding.fund_name or "",
-                holding.share_class or "",
-                holding.fund_manager or "",
-                holding.fund_account or "",
-                holding.trade_account or "",
-                holding.sales_agency or "",
-                f"{holding.holding_shares:,.2f}",
-                str(holding.share_date) if holding.share_date else "",
-                f"{holding.nav:.4f}" if holding.nav else "",
-                str(holding.nav_date) if holding.nav_date else "",
-                f"¥{holding.asset_value:,.2f}",
-                holding.settlement_currency or "",
-                holding.dividend_method or "",
+        if output_format == "json":
+            # JSON 格式输出
+            items = []
+            for h in holdings:
+                items.append({
+                    "fund_code": h.fund_code,
+                    "fund_name": h.fund_name or "",
+                    "share_class": h.share_class or "",
+                    "fund_manager": h.fund_manager or "",
+                    "fund_account": h.fund_account or "",
+                    "trade_account": h.trade_account or "",
+                    "sales_agency": h.sales_agency or "",
+                    "holding_shares": round(h.holding_shares, 2) if h.holding_shares else 0,
+                    "share_date": str(h.share_date) if h.share_date else "",
+                    "nav": round(h.nav, 4) if h.nav else None,
+                    "nav_date": str(h.nav_date) if h.nav_date else "",
+                    "asset_value": round(h.asset_value, 2) if h.asset_value else 0,
+                    "settlement_currency": h.settlement_currency or "",
+                    "dividend_method": h.dividend_method or ""
+                })
+            result = {
+                "query": {
+                    "column": display_name,
+                    "value": value
+                },
+                "items": items,
+                "summary": {
+                    "total_count": len(holdings),
+                    "total_value": round(total_value, 2)
+                }
+            }
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            # 表格格式输出
+            table = Table(
+                title=f"查询结果: {display_name} 包含 '{value}' (共{len(holdings)}条)",
+                show_header=True,
+                header_style="bold cyan",
+                expand=False,
             )
 
-        self.console.print(table)
+            # 添加所有导入字段列（不限制宽度，完整显示）
+            table.add_column("基金代码", style="cyan")
+            table.add_column("基金名称", style="white")
+            table.add_column("份额类别", style="blue")
+            table.add_column("基金管理人", style="magenta")
+            table.add_column("基金账户", style="green")
+            table.add_column("交易账户", style="yellow")
+            table.add_column("销售机构", style="blue")
+            table.add_column("持有份额", justify="right", style="green")
+            table.add_column("份额日期", justify="center", style="white")
+            table.add_column("净值", justify="right", style="yellow")
+            table.add_column("净值日期", justify="center", style="white")
+            table.add_column("资产价值", justify="right", style="green")
+            table.add_column("结算币种", justify="center", style="blue")
+            table.add_column("分红方式", style="cyan")
 
-        # 显示汇总信息
-        total_value = sum(h.asset_value for h in holdings)
-        self.console.print(f"\n[green]总计: {len(holdings)} 条记录, 资产价值: ¥{total_value:,.2f}[/]")
+            # 显示所有记录，不做截取
+            for holding in holdings:
+                table.add_row(
+                    holding.fund_code,
+                    holding.fund_name or "",
+                    holding.share_class or "",
+                    holding.fund_manager or "",
+                    holding.fund_account or "",
+                    holding.trade_account or "",
+                    holding.sales_agency or "",
+                    f"{holding.holding_shares:,.2f}",
+                    str(holding.share_date) if holding.share_date else "",
+                    f"{holding.nav:.4f}" if holding.nav else "",
+                    str(holding.nav_date) if holding.nav_date else "",
+                    f"¥{holding.asset_value:,.2f}",
+                    holding.settlement_currency or "",
+                    holding.dividend_method or "",
+                )
+
+            self.console.print(table)
+
+            # 显示汇总信息
+            self.console.print(f"\n[green]总计: {len(holdings)} 条记录, 资产价值: ¥{total_value:,.2f}[/]")
 
     def _get_column_value(self, holding: FundHolding, column: GroupColumn) -> Any:
         """获取持仓记录中指定列的值"""

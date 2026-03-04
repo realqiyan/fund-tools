@@ -114,48 +114,52 @@ def detail(ctx, fund_code):
 @cli.command()
 @click.option("-c", "--column", required=True, type=click.Choice(COLUMN_CHOICES),
               help="分组列名")
+@click.option("-f", "--format", "output_format", type=click.Choice(["table", "json"]),
+              default="table", help="输出格式: table(表格) 或 json")
 @click.pass_context
-def group(ctx, column):
+def group(ctx, column, output_format):
     """按指定列分组统计
 
-    支持的列名: fund_code, 
-              fund_name, 
-              fund_manager, 
+    支持的列名: fund_code,
+              fund_name,
+              fund_manager,
               fund_account,
-              trade_account, 
-              sales_agency, 
-              invest_type, 
-              currency, 
+              trade_account,
+              sales_agency,
+              invest_type,
+              currency,
               dividend_method
     """
     database = ctx.obj["database"]
     stats = Statistics(database)
     group_column = GroupColumn(column)
-    stats.show_group_statistics(group_column)
+    stats.show_group_statistics(group_column, output_format)
 
 
 @cli.command()
 @click.option("-c", "--column", required=True, type=click.Choice(COLUMN_CHOICES),
               help="查询列名")
 @click.option("-v", "--value", required=True, help="查询值（支持模糊匹配）")
+@click.option("-f", "--format", "output_format", type=click.Choice(["table", "json"]),
+              default="table", help="输出格式: table(表格) 或 json")
 @click.pass_context
-def query(ctx, column, value):
+def query(ctx, column, value, output_format):
     """按条件查询持仓明细
 
-    支持的列名: fund_code, 
-              fund_name, 
-              fund_manager, 
+    支持的列名: fund_code,
+              fund_name,
+              fund_manager,
               fund_account,
-              trade_account, 
-              sales_agency, 
-              invest_type, 
-              currency, 
+              trade_account,
+              sales_agency,
+              invest_type,
+              currency,
               dividend_method
     """
     database = ctx.obj["database"]
     stats = Statistics(database)
     group_column = GroupColumn(column)
-    stats.show_query_result(group_column, value)
+    stats.show_query_result(group_column, value, output_format)
 
 
 # ==================== 数据同步命令 ====================

@@ -405,10 +405,16 @@ bash scripts/fund-cli.sh group -c sales_agency    # 按销售机构
 bash scripts/fund-cli.sh group -c invest_type     # 按投资类型
 bash scripts/fund-cli.sh group -c currency         # 按结算币种
 
+# 分组统计支持 JSON 格式输出
+bash scripts/fund-cli.sh group -c fund_manager -f json
+
 # 按条件查询持仓
 bash scripts/fund-cli.sh query -c fund_manager -v "易方达"
 bash scripts/fund-cli.sh query -c invest_type -v "股票型"
 bash scripts/fund-cli.sh query -c fund_name -v "红利"
+
+# 查询支持 JSON 格式输出
+bash scripts/fund-cli.sh query -c fund_name -v "红利" -f json
 ```
 
 支持的分组/查询列：
