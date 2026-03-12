@@ -140,10 +140,8 @@ def import_excel(ctx, excel_path):
 def reset(ctx):
     """清空所有持仓记录"""
     database = ctx.obj["database"]
-
-    if Confirm.ask("确认要清空所有持仓记录吗？此操作不可恢复！"):
-        count = database.clear_all_holdings()
-        console.print(f"[green]已清空 {count} 条持仓记录[/]")
+    count = database.clear_all_holdings()
+    console.print(f"[green]已清空 {count} 条持仓记录[/]")
 
 
 # ==================== 持仓管理命令 ====================

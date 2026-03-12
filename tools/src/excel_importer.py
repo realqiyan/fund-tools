@@ -137,6 +137,8 @@ class ExcelImporter:
 
             # 读取数据行
             actual_row_num = header_row_idx + 1
+             # 清空所有持仓记录
+            self.database.clear_all_holdings()
             for row in worksheet.iter_rows(min_row=header_row_idx + 1, values_only=True):
                 if row is None or all(cell is None for cell in row):
                     actual_row_num += 1

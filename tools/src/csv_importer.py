@@ -141,6 +141,9 @@ class CSVImporter:
             normalized_reader = self._normalize_reader(reader)
 
             actual_row_num = header_row_idx + 2
+            
+            # 清空所有持仓记录
+            self.database.clear_all_holdings()
 
             for row in normalized_reader:
                 if not self._is_data_row(row):
