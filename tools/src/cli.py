@@ -26,9 +26,10 @@ COLUMN_CHOICES = [col.value for col in GroupColumn]
 
 
 # 字段帮助说明（用于 query 和 group 命令的 epilog）
+# 注意：使用 \b (block) 让 Click 保留原始格式，不重新换行
 COLUMN_HELP_EPILOG = """
+\b
 支持的查询/分组字段:
-────────────────────────────────────────
   fund_code        基金代码    基金的唯一标识代码
   fund_name        基金名称    基金的完整名称
   fund_manager     基金管理人  基金管理公司名称
@@ -39,6 +40,7 @@ COLUMN_HELP_EPILOG = """
   currency         结算币种    资产结算使用的货币类型
   dividend_method  分红方式    基金的分红方式(如现金分红)
 
+\b
 示例:
   fund-tools query -c fund_name -v 货币    查询名称包含"货币"的基金
   fund-tools group -c fund_manager         按基金管理人分组统计
