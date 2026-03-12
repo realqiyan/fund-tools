@@ -41,8 +41,11 @@ compatibility: 依赖 mcporter CLI 和 qieman-mcp MCP 服务
 # 初始化环境（检查 mcporter 和 qieman-mcp 配置）
 bash scripts/fund-cli.sh init
 
-# 导入 CSV 持仓文件，导入的数据会保存到本地数据库
+# 导入 CSV 持仓文件，导入的数据会覆盖保存到本地数据库
 bash scripts/fund-cli.sh import-csv tools/data/holdings.csv
+
+# 导入 Excel 持仓文件，导入的数据会覆盖保存到本地数据库
+bash scripts/fund-cli.sh import-excel tools/data/holdings.xlsx
 
 # 同步所有数据到本地（基础信息 + 持仓详情）
 bash scripts/fund-cli.sh sync --all
@@ -88,9 +91,11 @@ mcporter call qieman-mcp.BatchGetFundsHolding --args '{"fundCodes":["004137"]}' 
 
 详见 [references/reference.md](references/reference.md)
 
-## CSV 导入格式
+## 导入格式
 
-示例文件见 [assets/sample.csv](assets/sample.csv)
+csv示例文件见 [assets/sample.csv](assets/sample.csv)
+
+- Excel格式和csv格式相同，只是文件扩展名不同
 
 详细规范见 [references/csv-format.md](references/csv-format.md)
 
